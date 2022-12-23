@@ -14,8 +14,12 @@ function App() {
       let [header, content] = e.data.split("||")
       console.log(header)
       if (header === "receive_connection") {
-        ws.send("get_prompt||")
-        ws.send("get_answers||")
+        ws.send(`join_room||`)
+      }
+      if (header === "receive_room") {
+        console.log(content)
+        ws.send(`get_prompt||`)
+        ws.send(`get_answers||`)
       }
       if (header === "receive_prompt") {
         console.log(content)
