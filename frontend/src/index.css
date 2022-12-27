@@ -6,6 +6,21 @@
 
 :root {
   font-family: "Poppins"
+
+
+}
+
+.Toastify__toast {
+  background-color: #ff000014 !important;
+  border: 1px solid red;
+  box-shadow: none;
+  font-family: "Poppins";
+  color: black;
+  font-weight: 600;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .center {
