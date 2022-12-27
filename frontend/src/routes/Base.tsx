@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useCards } from '../stores/cards'
 import { clientID, ws } from '../stores/webSocket'
 
 function App() {
   // const [ws, setWS] = useState<WebSocket>()
-  const [prompt, setPrompt] = useState("")
-  const [answers, setAnswers] = useState<string[]>([])
+  // const [prompt, setPrompt] = useState("")
+  // const [answers, setAnswers] = useState<string[]>([])
+
+  const {prompt, answers, setPrompt, setAnswers, setCommitedCards} = useCards((state) => ({answers: state.answers, prompt: state.prompt, setPrompt: state.setPrompt, setAnswers: state.setAnswers, setCommitedCards: state.setCommitedCards}))
 
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -43,6 +46,9 @@ function App() {
       if (header === "receive_goto_selection") {
         console.log("Gotta go lol")
         console.log(content)
+        let cardData = JSON.parse(content)
+        setCommitedCards(cardData)
+
         navigate(`/select?roomID=${roomID}`)
       }
     }
