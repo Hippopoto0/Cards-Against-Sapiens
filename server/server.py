@@ -55,10 +55,32 @@ global white_cards
 global black_cards
 
 with open("server/allCards.json", "r", encoding="utf-8") as f:
-    data = json.load(f)[4]
-    white_cards: List[any] = data["white"]
+    data = json.load(f)
+    white_cards = []
+    black_cards = []
+    for pack in data:
+
+        # print(pack["white"])
+        # white_cards.append(pack["white"])
+        [white_cards.append(card) for card in pack["white"]]
+        [black_cards.append(card) for card in pack["black"]]
+    # print(data)
+    # white_cards: List[any] = data["white"]
     random.shuffle(white_cards)
-    black_cards: List[any] = data["black"]
+    random.shuffle(black_cards)
+    # black_cards: List[any] = data["black"]
+
+    # print(data[0])
+    # white_cards = []
+    # black_cards = []
+
+    # for pack in data:
+    #     white_cards.append(pack["white"])
+    #     black_cards.append(pack["black"])
+
+    # random.shuffle(white_cards)
+    # random.shuffle(black_cards)
+
 
 class Player:
     def __init__(self) -> None:
@@ -73,6 +95,9 @@ class Room:
 
         self.players: Dict[str, Player] = {}
         self.commited_cards: Dict[str, str] = {}
+
+        self.preferenceCount: Dict[str, int] = {}
+        self.preferencesCommited: int = 0
 
         self.prompt: str = random.choice(self.black_cards)["text"].replace("_", "_____")
 
@@ -102,6 +127,17 @@ class Room:
             self.white_cards.append(self.white_cards[0])
             player.cards.append(self.white_cards.pop(0))
 
+    def getExtraCard(self, client_id: str):
+        player = self.players[client_id]
+        self.white_cards.append(self.white_cards[0])
+
+        card = self.white_cards.pop(0)
+
+        player.cards.append(card)
+
+        return card
+
+
 
     def getPlayerCards(self, client_id: str) -> List[any]:
         player = self.players[client_id]
@@ -118,6 +154,14 @@ class Room:
             return True
         else:
             return False
+
+    def addUserCardPreference(self, client_id: str, card_client_id: str):
+        if card_client_id in self.preferenceCount:
+            self.preferenceCount[card_client_id] += 1
+        else:
+            self.preferenceCount[card_client_id] = 1
+
+        self.preferencesCommited += 1
 
 class ConnectionManager:
     def __init__(self):
@@ -174,6 +218,28 @@ class ConnectionManager:
         else:
             return False
 
+    def add_to_card_scores_and_return_if_all_commited(self, client_id: str, id_for_card: str) -> bool:
+        client_room = self.get_room(client_id=client_id)
+
+        client_room.addUserCardPreference(client_id=client_id, card_client_id=id_for_card)
+        if client_room.preferencesCommited >= len(client_room.players):
+            return True
+        else:
+            return False
+
+    def get_winner_and_reset_round(self, room: Room):
+        # maxClient = max(room.preferenceCount, key=room.preferenceCount.get)
+        maxClient = max(room.preferenceCount, key=room.preferenceCount.get)
+
+        # reset stuff
+        room.preferenceCount = {}
+        room.preferencesCommited = 0
+        room.commited_cards = {}
+
+        print(room.preferenceCount.keys(), flush=True)
+
+        return maxClient
+
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
@@ -226,6 +292,25 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     print(manager.get_room(client_id).commited_cards.items())
                     client_room = manager.get_room(client_id)
                     await manager.send_room_message(f"receive_goto_selection||{json.dumps(client_room.commited_cards)}", room=client_room)
+            if header == "add_score_to_card":
+                client_id_of_card = data.split("||")[1]
+
+                are_all_preferences_done = manager.add_to_card_scores_and_return_if_all_commited(client_id=client_id, id_for_card=client_id_of_card)
+                print(f"are all done?: {str(are_all_preferences_done)}")
+
+                if are_all_preferences_done:
+                    client_room = manager.get_room(client_id=client_id)
+                    id_of_winner = manager.get_winner_and_reset_round(room=client_room)
+
+                    print(f"id of winner: {id_of_winner}")
+
+                    await manager.send_room_message(f"receive_winner||{id_of_winner}", room=client_room)
+
+            if header == "request_extra_card":
+                latestCard = manager.get_room(client_id=client_id).getExtraCard(client_id=client_id)
+
+                await manager.send_personal_message(f"receive_extra_card||{json.dumps(latestCard)}", websocket=websocket)
+                
             
             # await manager.send_personal_message(f"You wrote: {data}", websocket)
             # await manager.broadcast(f"Client #{client_id} says: {data}")

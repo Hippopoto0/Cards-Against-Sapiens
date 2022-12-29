@@ -9,12 +9,13 @@ function App() {
   // const [prompt, setPrompt] = useState("")
   // const [answers, setAnswers] = useState<string[]>([])
 
-  const {prompt, answers, setPrompt, setAnswers, setCommitedCards} = useCards((state) => ({answers: state.answers, prompt: state.prompt, setPrompt: state.setPrompt, setAnswers: state.setAnswers, setCommitedCards: state.setCommitedCards}))
+  const {prompt, answers, setPrompt, setAnswers, pushToAnswers, removeFromAnswers, commitedCard, setCommitedCard, setCommitedCards} = useCards((state) => ({answers: state.answers, prompt: state.prompt, setPrompt: state.setPrompt, setAnswers: state.setAnswers, pushToAnswers: state.pushToAnswers, removeFromAnswers: state.removeFromAnswers, commitedCard: state.commitedCard, setCommitedCard: state.setCommitedCard, setCommitedCards: state.setCommitedCards}))
 
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
 
   const roomID = searchParams.get("roomID")
+
   // const [client_id, setClient_id] = useState("")
   // const [ws, setWs] = useState<WebSocket>();
   // const client_id = Date.now().toString()
@@ -48,22 +49,34 @@ function App() {
         console.log(content)
         let cardData = JSON.parse(content)
         setCommitedCards(cardData)
+        console.log(`commited card: ${commitedCard}`)
+        removeFromAnswers(commitedCard)
+        setCommitedCard("")
 
         navigate(`/select?roomID=${roomID}`)
       }
+      if (header === "receive_extra_card") {
+        let newCardText = JSON.parse(content).text
+
+         pushToAnswers(newCardText)
+      }
     }
-  }, [])
+  }, [commitedCard]) // reacts to commited card so it can see its change in state within the onmessage
 
   function commitCard(cardText: string) {
     console.log(clientID)
+
+    setCommitedCard(cardText)
+
     ws.send(`commit_card||${cardText}`)
+    
   }
 
   return (
     <main className=' w-full bg-secondary center overflow-x-hidden'>
       <div className='overflow-x-hidden flex items-center flex-col md:flex-row w-full xl:w-[1280px] h-screen bg-secondary overflow-y-scroll'>
         <section className='w-full md:w-80 center p-8'>
-          <div className=' p-4 text-primary font-bold text-xl cursor-default select-none w-56 md:w-72 aspect-[3/5] bg-zinc-900 rounded-3xl shadow-lg'>
+          <div className=' p-4 text-primary font-bold text-xl cursor-default select-none w-56 md:w-72 aspect-[3/5] bg-zinc-800 rounded-3xl shadow-lg'>
             { prompt }
           </div>
         </section>

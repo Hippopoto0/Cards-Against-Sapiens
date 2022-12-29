@@ -9,6 +9,7 @@ import Base from './routes/Base';
 import EnterRoom from './routes/EnterRoom';
 import { ToastContainer } from "react-toastify"
 import SelectWinner from './routes/SelectWinner';
+import Wait from './routes/Wait';
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
   {
     path: "/select",
     element: <SelectWinner />
+  },
+  {
+    path: "/wait",
+    element: <Wait />
   }
 ]);
 
