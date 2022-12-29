@@ -62,6 +62,17 @@ function EnterRoom() {
         // navigate(`/game?roomID=${roomName.toUpperCase()}`)
     }
 
+    function createRoomCode(): string {
+        var result           = '';
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < 4; i++ ) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+
+        return result;
+    }
+
     return (
         <>
         <main className=' w-full h-screen bg-secondary text-black center flex-col'>
@@ -82,7 +93,9 @@ function EnterRoom() {
         <ToastContainer position='bottom-left' hideProgressBar newestOnTop />
         </main>
         <input ref={codeInputEl} value={inputText} onBlur={() => setDigitIndex(100000000)} onChange={(e) => setInputText((e.target as HTMLInputElement).value)} className='opacity-0 absolute top-0 left-0 pointer-events-none' type="text" />
-        <button className='absolute bottom-4 right-4 font-bold px-8 py-3 rounded-md text-zinc-800 border-2 bg-secondary border-zinc-800 hover:brightness-95'>Create Room</button>
+        <button 
+        onClick={() => navigate(`/wait?roomID=${createRoomCode()}`)}
+        className='absolute bottom-4 right-4 font-bold px-8 py-3 rounded-md text-zinc-800 border-2 bg-secondary border-zinc-800 hover:brightness-95'>Create Room</button>
         </>
     )
 }

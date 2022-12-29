@@ -2,9 +2,24 @@ import { motion } from 'framer-motion'
 import React, { useEffect, useLayoutEffect } from 'react'
 import { useCards } from '../stores/cards'
 import anime from "animejs/lib/anime.es.js"
+import { ws } from '../stores/webSocket'
+import { useNavigate } from 'react-router-dom'
 
 function SelectWinner() {
     const {prompt, commitedCards, setCommitedCards} = useCards((state) => ({prompt: state.prompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards}))
+    const navigate = useNavigate()
+
+    useLayoutEffect(() => {
+        ws.onmessage = (e: MessageEvent<string>) => {
+            let [header, content] = e.data.split("||")
+
+            if (header === "receive_winner") {
+                console.log("winner is: " + content)
+                ws.send("request_extra_card||")
+                navigate("/game?roomID=AAAAA")
+            }
+        }
+    }, [])
 
     useEffect(() => {
         anime({
@@ -22,12 +37,16 @@ function SelectWinner() {
         })
 
     }, [])
+
+    function commitCardPreference(id_of_preference: string) {
+        ws.send(`add_score_to_card||${id_of_preference}`)
+    } 
     
     return (
         <main className=' w-full bg-secondary center overflow-x-hidden'>
             <div className='overflow-x-hidden flex items-center flex-col md:flex-row w-full xl:w-[1280px] h-screen bg-secondary overflow-y-scroll'>
                 <section className='w-full md:w-80 center p-8'>
-                <div className=' p-4 text-primary font-bold text-xl cursor-default select-none w-56 md:w-72 aspect-[3/5] bg-zinc-900 rounded-3xl shadow-lg'>
+                <div className=' p-4 text-primary font-bold text-xl cursor-default select-none w-56 md:w-72 aspect-[3/5] bg-zinc-800 rounded-3xl shadow-lg'>
                     { prompt }
                 </div>
                 </section>
@@ -38,7 +57,7 @@ function SelectWinner() {
                         return <div 
                             key={i} 
                             className='anime-fade-children select-none p-2 text-sm font-semibold text-zinc-800 w-32 aspect-[3/4] bg-primary rounded-xl shadow-sm border-2 border-zinc-300 hover:cursor-pointer'
-                            // onClick={() => commitCard(cardText)}
+                            onClick={() => commitCardPreference(clientID)}
                             >
                             {cardText}
                         </div>
