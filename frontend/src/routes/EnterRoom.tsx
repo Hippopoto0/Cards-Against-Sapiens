@@ -2,6 +2,8 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from "react-router-dom"
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { userUsernameStore } from '../stores/username';
+import { ws } from '../stores/webSocket';
 
 function EnterRoom() {
     const [inputText, setInputText] = useState(" ")
@@ -10,6 +12,8 @@ function EnterRoom() {
     const [codeDigits, setCodeDigits] = useState(Array(4).fill(" ") as Array<string>)
     const [digitIndex, setDigitIndex] = useState(0)
 
+    const usernameElRef = useRef<HTMLInputElement>(null)
+    const { username, setUsername } = userUsernameStore((state) => ({ username: state.username, setUsername: state.setUsername }))
 
     const navigate = useNavigate()
 
@@ -64,7 +68,7 @@ function EnterRoom() {
 
     function createRoomCode(): string {
         var result           = '';
-        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         var charactersLength = characters.length;
         for ( var i = 0; i < 4; i++ ) {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -87,9 +91,10 @@ function EnterRoom() {
                 )}
             </div>
             {/* {inputText} */}
+            <input ref={usernameElRef} onChange={(e) => setUsername(e.target.value)} type="text" placeholder='Username' className='mt-10 p-3 rounded-xl border-2 border-zinc-300 font-bold text-lg outline-none text-slate-700' />
             <button 
             onClick={() => joinRoom()}
-            className='mt-20 font-bold px-8 py-3 rounded-md bg-zinc-800 text-gray-50 hover:brightness-125'>Join Room</button>
+            className='mt-10 font-bold px-8 py-3 rounded-md bg-zinc-800 text-gray-50 hover:brightness-125'>Join Room</button>
         <ToastContainer position='bottom-left' hideProgressBar newestOnTop />
         </main>
         <input ref={codeInputEl} value={inputText} onBlur={() => setDigitIndex(100000000)} onChange={(e) => setInputText((e.target as HTMLInputElement).value)} className='opacity-0 absolute top-0 left-0 pointer-events-none' type="text" />

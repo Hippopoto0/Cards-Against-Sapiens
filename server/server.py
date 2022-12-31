@@ -86,6 +86,14 @@ class Player:
     def __init__(self) -> None:
         self.cards = []
 
+WaitingRooms: Dict[str, List[str]] = {
+
+}
+
+ClientToWaitingRoom: Dict[str, str] = {}
+
+ClientToUserName: Dict[str, str] = {}
+
 class Room:
     def __init__(self, id) -> None:
         self.id: str = id
@@ -194,15 +202,15 @@ class ConnectionManager:
         return self.rooms[self.socket_to_rooms[client_id]]
 
     def join_room(self, room_id: str, client_id: str):
-        if self.rooms.get(room_id) == None: return self.create_room(client_id=client_id)
+        if self.rooms.get(room_id) == None: return self.create_room(client_id=client_id, room_id=room_id)
 
-        room = self.rooms["AAAAA"]
+        room = self.rooms[room_id]
         room.addPlayerToRoom(client_id=client_id)
         room.giveHandToPlayer(client_id=client_id)
 
-    async def create_room(self, client_id: str):
+    async def create_room(self, client_id: str, room_id: str):
         
-        room_id = ''.join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(5))
+        # room_id = ''.join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(5))
 
         self.rooms[room_id] = Room(id=room_id)
 
@@ -270,12 +278,15 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             
             print(header, flush=True)
             if header == "join_room":
-                manager.socket_to_rooms[client_id] = "AAAAA"
+                roomID = data.split("||")[1]
+                print(f"roomID: {roomID}")
+                manager.socket_to_rooms[client_id] = roomID
+                manager.rooms[roomID] = Room(id=roomID)
                 
-                client_room = manager.rooms[manager.socket_to_rooms[client_id]]
+                # client_room = manager.rooms[manager.socket_to_rooms[client_id]]
                 # client_room.addPlayerToRoom(websocket=websocket)
                 # client_room.giveHandToPlayer(websocket=WebSocket)
-                manager.join_room("AAAAA", client_id=client_id)
+                manager.join_room(room_id=roomID, client_id=client_id)
 
                 await manager.send_personal_message(f"receive_room||AAAAA", websocket)
 
@@ -310,10 +321,63 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 latestCard = manager.get_room(client_id=client_id).getExtraCard(client_id=client_id)
 
                 await manager.send_personal_message(f"receive_extra_card||{json.dumps(latestCard)}", websocket=websocket)
+
+            if header == "add_to_waiting_room":
+                roomID = data.split("||")[1]
+
+                if roomID in WaitingRooms:
+                    if client_id not in WaitingRooms[roomID]:
+                        WaitingRooms[roomID].append(client_id)
+                else:
+                    WaitingRooms[roomID] = [client_id]
+
+                ClientToWaitingRoom[client_id] = roomID
+
+                clients_in_room = json.dumps(WaitingRooms[roomID])
+
+                print(WaitingRooms[roomID])
+
+                for tempClient in WaitingRooms[roomID]:
+                    await manager.send_personal_message(f"receive_waiting_players||{clients_in_room}", websocket=manager.ids_to_sockets[tempClient])
+
+            if header == "start_game_from_wait":
+                waiting_room = ClientToWaitingRoom[client_id]
+
+                clients_in_waiting_room = WaitingRooms[waiting_room]
+
+                
+                for tempClient in clients_in_waiting_room:
+                    print(f"client {tempClient} should now go to their game")
+
+                    await manager.send_personal_message(f"receive_goto_game||", websocket=manager.ids_to_sockets[tempClient])
+
+                    # delete room contents, its just waste now
+                    del ClientToWaitingRoom[tempClient]
+
+                # remove room from waiting room list
+                del WaitingRooms[waiting_room]
+                
                 
             
             # await manager.send_personal_message(f"You wrote: {data}", websocket)
             # await manager.broadcast(f"Client #{client_id} says: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket, client_id)
+
+        if client_id in ClientToWaitingRoom:
+            print("client should be removed from room", flush=True)
+            waiting_room = ClientToWaitingRoom[client_id]
+
+            WaitingRooms[waiting_room].remove(client_id)
+
+            del ClientToWaitingRoom[client_id]
+            
+            ClientToWaitingRoom[client_id] = roomID
+
+            clients_in_room = json.dumps(WaitingRooms[roomID])
+
+            for tempClient in WaitingRooms[waiting_room]:
+                print(f"sending updates waiting to client: {tempClient}")
+                await manager.send_personal_message(f"receive_waiting_players||{clients_in_room}", websocket=manager.ids_to_sockets[tempClient])
+
         await manager.broadcast(f"Client #{client_id} left the chat")
