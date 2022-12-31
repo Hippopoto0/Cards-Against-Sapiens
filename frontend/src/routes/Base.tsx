@@ -15,18 +15,23 @@ function App() {
   const navigate = useNavigate()
 
   const roomID = searchParams.get("roomID")
+  console.log("roomID: " + roomID)
 
   // const [client_id, setClient_id] = useState("")
   // const [ws, setWs] = useState<WebSocket>();
   // const client_id = Date.now().toString()
 
+  
+
   useLayoutEffect(() => {
+    ws.readyState && ws.send(`join_room||${roomID}`)
+
     console.log(clientID)
     ws.onmessage = (e: MessageEvent<String>) => {
       // console.log(e.data)
       let [header, content] = e.data.split("||")
       if (header === "receive_connection") {
-        ws.send(`join_room||`)
+        ws.send(`join_room||${roomID}`)
         console.log("clientid" + clientID)
       }
       if (header === "receive_room") {
