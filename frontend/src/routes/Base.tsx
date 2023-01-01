@@ -24,7 +24,8 @@ function App() {
   
 
   useLayoutEffect(() => {
-    ws.readyState && ws.send(`join_room||${roomID}`)
+    // ws.readyState && ws.send(`join_room||${roomID}`)
+
 
     console.log(clientID)
     ws.onmessage = (e: MessageEvent<String>) => {
@@ -32,7 +33,7 @@ function App() {
       let [header, content] = e.data.split("||")
       if (header === "receive_connection") {
         ws.send(`join_room||${roomID}`)
-        console.log("clientid" + clientID)
+        console.log("received connection mofo")
       }
       if (header === "receive_room") {
         ws.send(`get_prompt||`)

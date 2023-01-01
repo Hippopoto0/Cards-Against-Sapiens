@@ -203,15 +203,16 @@ class ConnectionManager:
 
     def join_room(self, room_id: str, client_id: str):
         if self.rooms.get(room_id) == None: return self.create_room(client_id=client_id, room_id=room_id)
+        print(f"lets see if this room exists: {str(self.rooms.get(room_id))}")
 
         room = self.rooms[room_id]
         room.addPlayerToRoom(client_id=client_id)
         room.giveHandToPlayer(client_id=client_id)
 
-    async def create_room(self, client_id: str, room_id: str):
+    def create_room(self, client_id: str, room_id: str):
         
         # room_id = ''.join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(5))
-
+        print("is this room beng created?", flush=True)
         self.rooms[room_id] = Room(id=room_id)
 
         self.join_room(room_id=room_id, client_id=client_id)
@@ -281,7 +282,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 roomID = data.split("||")[1]
                 print(f"roomID: {roomID}")
                 manager.socket_to_rooms[client_id] = roomID
-                manager.rooms[roomID] = Room(id=roomID)
+                # manager.rooms[roomID] = Room(id=roomID)
                 
                 # client_room = manager.rooms[manager.socket_to_rooms[client_id]]
                 # client_room.addPlayerToRoom(websocket=websocket)
@@ -350,6 +351,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     print(f"client {tempClient} should now go to their game")
 
                     await manager.send_personal_message(f"receive_goto_game||", websocket=manager.ids_to_sockets[tempClient])
+                    await manager.send_personal_message(f"receive_connection||", websocket=manager.ids_to_sockets[tempClient])
 
                     # delete room contents, its just waste now
                     del ClientToWaitingRoom[tempClient]
