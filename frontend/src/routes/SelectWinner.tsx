@@ -3,11 +3,13 @@ import React, { useEffect, useLayoutEffect } from 'react'
 import { useCards } from '../stores/cards'
 import anime from "animejs/lib/anime.es.js"
 import { ws } from '../stores/webSocket'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 function SelectWinner() {
     const {prompt, commitedCards, setCommitedCards} = useCards((state) => ({prompt: state.prompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards}))
     const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const roomID = searchParams.get("roomID")
 
     useLayoutEffect(() => {
         ws.onmessage = (e: MessageEvent<string>) => {
@@ -16,7 +18,7 @@ function SelectWinner() {
             if (header === "receive_winner") {
                 console.log("winner is: " + content)
                 ws.send("request_extra_card||")
-                navigate("/game?roomID=AAAAA")
+                navigate("/game?roomID=" + roomID)
             }
         }
     }, [])
