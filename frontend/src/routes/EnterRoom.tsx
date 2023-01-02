@@ -19,6 +19,7 @@ function EnterRoom() {
 
     useLayoutEffect(() => {
         codeInputEl.current?.focus()
+        setUsername("")
     }, [])
 
     function decrementDigitIndex() {
@@ -62,8 +63,19 @@ function EnterRoom() {
     function joinRoom() {
         let roomName = codeDigits.join("")
 
-        toast.error("That room doesn't exist yet!")
-        // navigate(`/game?roomID=${roomName.toUpperCase()}`)
+        ws.send(`does_room_exist||${roomName.toUpperCase()  }`)
+
+        ws.onmessage = (e: MessageEvent<String>) => {
+            const [header, content] = e.data.split("||")
+
+            if (header === "receive_does_room_exist") {
+                if (content === "true") {
+                    navigate(`/wait?roomID=${roomName.toUpperCase()}`)
+                } else {
+                    toast.error("That room doesn't exist yet!")
+                }
+            }
+        }
     }
 
     function createRoomCode(): string {

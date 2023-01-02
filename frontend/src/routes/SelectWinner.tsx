@@ -9,13 +9,19 @@ import { useScoreStore } from '../stores/score'
 function SelectWinner() {
     const {prompt, commitedCards, setCommitedCards} = useCards((state) => ({prompt: state.prompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards}))
     const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const roomID = searchParams.get("roomID")
-  const { incrementScore } = useScoreStore((state) => ({ incrementScore: state.incrementScore }))
+    const [searchParams, setSearchParams] = useSearchParams()
+    const roomID = searchParams.get("roomID")
+    const { incrementScore } = useScoreStore((state) => ({ incrementScore: state.incrementScore }))
 
     const [preferredCard, setPreferredCard] = useState("")
 
     useLayoutEffect(() => {
+        window.addEventListener("popstate", (e) => {
+            e.preventDefault()
+
+            navigate("/")
+        })
+
         ws.onmessage = (e: MessageEvent<string>) => {
             let [header, content] = e.data.split("||")
 

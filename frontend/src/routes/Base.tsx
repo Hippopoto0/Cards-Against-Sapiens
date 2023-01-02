@@ -28,6 +28,11 @@ function App() {
 
   useLayoutEffect(() => {
     // ws.readyState && ws.send(`join_room||${roomID}`)
+    window.addEventListener("popstate", (e) => {
+      e.preventDefault()
+
+      navigate("/")
+    })
 
 
     console.log(clientID)
