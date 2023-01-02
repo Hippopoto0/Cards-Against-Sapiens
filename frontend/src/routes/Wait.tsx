@@ -1,9 +1,11 @@
-import React, { useLayoutEffect, useState } from 'react'
+import React, { Fragment, useLayoutEffect, useState } from 'react'
 import { MutatingDots } from 'react-loader-spinner'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { TbClipboard } from "react-icons/tb"
 
 import { ws, clientID } from '../stores/webSocket'
+import { Dialog, Transition } from '@headlessui/react'
+import { userUsernameStore } from '../stores/username'
 
 function copyTextToClipboard(text: string) {
   var textArea = document.createElement("textarea");
@@ -64,15 +66,20 @@ function copyTextToClipboard(text: string) {
 }
 
 function Wait() {
+
+    const [isModalOpen, setModalOpen] = useState(false)
     
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
     const roomID = searchParams.get("roomID")
 
     const [clientsInRoom, setClientsInRoom] = useState([])
+
+    const { username, setUsername } = userUsernameStore((state) => ({ username: state.username, setUsername: state.setUsername }))
     // console.log("socket: " + ws.readyState)
 
     useLayoutEffect(() => {
+        if (username == "") setModalOpen(true)
         // this will run if ws has already been established
         // ie if coming from main page
         ws.readyState && ws.send(`add_to_waiting_room||${roomID}`)
@@ -103,6 +110,7 @@ function Wait() {
     }
 
     return (
+        <>
         <main className=' w-full h-screen bg-secondary center flex-col'>
             <div className=' flex gap-4 text-5xl uppercase font-bold'>
                 {roomID?.split("").map((letter, i) =>
@@ -153,6 +161,62 @@ function Wait() {
                 </button>
             </div>
         </main>
+   <Transition appear show={isModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => setModalOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-60" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-secondary p-6 text-left align-middle shadow-xl transition-all flex flex-col items-center justify-center">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-2xl font-bold text-center leading-6 text-zinc-800"
+                  >
+                    Enter a Username
+                  </Dialog.Title>
+                  <input type="text" placeholder='Username' className=' rounded-md p-2 font-bold mt-8 outline-none focus:outline-2 focus:outline-zinc-3 00' />
+
+                  <div className="mt-8 w-full flex">
+                    <button 
+                        onClick={() => navigate(`/`)}
+                        className='ml-auto font-bold px-6 py-3 rounded-md text-zinc-800 border-2 bg-secondary border-zinc-800 hover:brightness-95'
+                    >
+                        Menu
+                    </button>
+                   
+                    <button 
+                        onClick={() => {}}
+                        className='ml-4 font-bold px-6 py-3 rounded-md bg-zinc-800 text-gray-50 hover:brightness-125'
+                    >
+                        Join
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+        </>
     )
 }
 
