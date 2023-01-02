@@ -82,14 +82,18 @@ function Wait() {
         if (username == "") setModalOpen(true)
         // this will run if ws has already been established
         // ie if coming from main page
-        ws.readyState && ws.send(`add_to_waiting_room||${roomID}`)
+
+        
+        // ws.readyState && ws.send(`add_to_waiting_room||${roomID}`)
+        if (username != "") { ws.readyState && ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
 
         ws.onmessage = (e: MessageEvent<String>) => {
             const [header, content] = e.data.split("||")
 
             // this runs if ws hadn't previously been established (direct from link)
             if (header === "receive_connection") {
-                ws.send(`add_to_waiting_room||${roomID}`)
+                // ws.send(`add_to_waiting_room||${roomID}`)
+                if (username != "") { ws.readyState && ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
             }
 
             if (header === "receive_waiting_players") {
@@ -162,7 +166,9 @@ function Wait() {
             </div>
         </main>
    <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setModalOpen(false)}>
+        <Dialog as="div" className="relative z-10" onClose={() => { setModalOpen(false); setTimeout(() => {
+          navigate("/")
+        }, 200);}}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -193,18 +199,24 @@ function Wait() {
                   >
                     Enter a Username
                   </Dialog.Title>
-                  <input type="text" placeholder='Username' className=' rounded-md p-2 font-bold mt-8 outline-none focus:outline-2 focus:outline-zinc-3 00' />
+                  <input type="text" placeholder='Username' onChange={(e) => setUsername(e.target.value)} className=' rounded-md p-2 font-bold mt-8 outline-none focus:outline-2 focus:outline-zinc-3 00' />
 
                   <div className="mt-8 w-full flex">
                     <button 
-                        onClick={() => navigate(`/`)}
+                        onClick={() => { setModalOpen(false); setTimeout(() => {
+          navigate("/")
+        }, 200);}}
                         className='ml-auto font-bold px-6 py-3 rounded-md text-zinc-800 border-2 bg-secondary border-zinc-800 hover:brightness-95'
                     >
                         Menu
                     </button>
                    
                     <button 
-                        onClick={() => {}}
+                        onClick={() => {
+                          setModalOpen(false)
+
+                          if (username != "") { ws.readyState && ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
+                        }}
                         className='ml-4 font-bold px-6 py-3 rounded-md bg-zinc-800 text-gray-50 hover:brightness-125'
                     >
                         Join

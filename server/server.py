@@ -299,7 +299,20 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 # client_room.giveHandToPlayer(websocket=WebSocket)
                 manager.join_room(room_id=roomID, client_id=client_id)
 
+                print(f"Rooms after join: {manager.rooms}", flush=True)
+
                 await manager.send_personal_message(f"receive_room||AAAAA", websocket)
+
+            if header == "does_room_exist":
+                roomID = data.split("||")[1]
+
+                print(f"checking if room works: {roomID}")
+                print(f"rooms: {manager.rooms}")
+
+                if roomID in WaitingRooms:
+                    await manager.send_personal_message(f"receive_does_room_exist||true", websocket=websocket)
+                else:
+                    await manager.send_personal_message(f"receive_does_room_exist||false", websocket=websocket)
 
             if header == "get_prompt":
                 await manager.send_personal_message(f"receive_prompt||{manager.get_room(client_id).prompt}", websocket)
@@ -337,7 +350,14 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 await manager.send_personal_message(f"receive_extra_card||{json.dumps(latestCard)}", websocket=websocket)
 
             if header == "add_to_waiting_room":
-                roomID = data.split("||")[1]
+                id_and_username = data.split("||")[1]
+
+                id_and_username = json.loads(id_and_username)
+
+                roomID = id_and_username["roomID"]
+                username = id_and_username["username"]
+                
+                ClientToUserName[client_id] = username
 
                 if roomID in WaitingRooms:
                     if client_id not in WaitingRooms[roomID]:
@@ -347,7 +367,11 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
                 ClientToWaitingRoom[client_id] = roomID
 
-                clients_in_room = json.dumps(WaitingRooms[roomID])
+                clients_in_room = []
+                for client in WaitingRooms[roomID]:
+                    clients_in_room.append(ClientToUserName[client])
+
+                clients_in_room = json.dumps(clients_in_room)
 
                 print(WaitingRooms[roomID])
 
@@ -378,6 +402,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             # await manager.broadcast(f"Client #{client_id} says: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket, client_id)
+
+        if client_id in ClientToUserName: del ClientToUserName[client_id]
 
         if client_id in ClientToWaitingRoom:
             print("client should be removed from room", flush=True)
