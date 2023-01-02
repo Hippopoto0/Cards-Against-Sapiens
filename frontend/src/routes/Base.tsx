@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useCards } from '../stores/cards'
+import { useScoreStore } from '../stores/score'
 import { clientID, ws } from '../stores/webSocket'
 
 function App() {
@@ -13,6 +14,8 @@ function App() {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
+
+  const { score } = useScoreStore((state) => ({ score: state.score }))
 
   const roomID = searchParams.get("roomID")
   console.log("roomID: " + roomID)
@@ -71,6 +74,7 @@ function App() {
 
   function commitCard(cardText: string) {
     console.log(clientID)
+    if (commitedCard != "") return
 
     setCommitedCard(cardText)
 
@@ -80,6 +84,9 @@ function App() {
 
   return (
     <main className=' w-full bg-secondary center overflow-x-hidden'>
+      <div id="score-container" className=' absolute top-5 right-6 md:right-10 text-5xl font-bold text-zinc-800'>
+        { score }
+      </div>
       <div className='overflow-x-hidden flex items-center flex-col md:flex-row w-full xl:w-[1280px] h-screen bg-secondary overflow-y-scroll'>
         <section className='w-full md:w-80 center p-8'>
           <div className=' p-4 text-primary font-bold text-xl cursor-default select-none w-56 md:w-72 aspect-[3/5] bg-zinc-800 rounded-3xl shadow-lg'>
@@ -90,7 +97,9 @@ function App() {
           {answers.map((cardText: string, i: number) => 
             <motion.div 
               key={i} 
-              className='select-none p-2 text-sm font-semibold text-zinc-800 w-32 aspect-[3/4] bg-primary rounded-xl shadow-sm border-2 border-zinc-300 hover:cursor-pointer'
+              className={`select-none p-2 text-sm font-semibold text-zinc-800 w-32 aspect-[3/4] 
+              bg-primary rounded-xl shadow-sm border-2 border-zinc-300 hover:cursor-pointer transition-all duration-500
+              ${ commitedCard != "" && commitedCard != cardText ? "bg-zinc-400/50 text-zinc-800/30 hover:cursor-default" : ""}`}
               onClick={() => commitCard(cardText)}
             >
               {cardText}

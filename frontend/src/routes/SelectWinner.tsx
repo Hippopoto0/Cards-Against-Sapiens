@@ -1,15 +1,19 @@
 import { motion } from 'framer-motion'
-import React, { useEffect, useLayoutEffect } from 'react'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useCards } from '../stores/cards'
 import anime from "animejs/lib/anime.es.js"
-import { ws } from '../stores/webSocket'
+import { clientID, ws } from '../stores/webSocket'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useScoreStore } from '../stores/score'
 
 function SelectWinner() {
     const {prompt, commitedCards, setCommitedCards} = useCards((state) => ({prompt: state.prompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards}))
     const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const roomID = searchParams.get("roomID")
+  const { incrementScore } = useScoreStore((state) => ({ incrementScore: state.incrementScore }))
+
+    const [preferredCard, setPreferredCard] = useState("")
 
     useLayoutEffect(() => {
         ws.onmessage = (e: MessageEvent<string>) => {
@@ -17,8 +21,12 @@ function SelectWinner() {
 
             if (header === "receive_winner") {
                 console.log("winner is: " + content)
+                if (content == clientID) incrementScore()
+
                 ws.send("request_extra_card||")
+
                 navigate("/game?roomID=" + roomID)
+
             }
         }
     }, [])
@@ -40,7 +48,11 @@ function SelectWinner() {
 
     }, [])
 
-    function commitCardPreference(id_of_preference: string) {
+    function commitCardPreference(id_of_preference: string, textOfPreference: string) {
+        if (preferredCard != "") return
+        
+        setPreferredCard(textOfPreference)
+
         ws.send(`add_score_to_card||${id_of_preference}`)
     } 
     
@@ -58,8 +70,11 @@ function SelectWinner() {
 
                         return <div 
                             key={i} 
-                            className='anime-fade-children select-none p-2 text-sm font-semibold text-zinc-800 w-32 aspect-[3/4] bg-primary rounded-xl shadow-sm border-2 border-zinc-300 hover:cursor-pointer'
-                            onClick={() => commitCardPreference(clientID)}
+                            className={`anime-fade-children select-none p-2 text-sm font-semibold 
+                            text-zinc-800 w-32 aspect-[3/4] bg-primary rounded-xl shadow-sm border-2 
+                            border-zinc-300 hover:cursor-pointer transition-colors duration-500
+                            ${preferredCard != "" && preferredCard != cardText ? "bg-zinc-400/50 text-zinc-800/30 hover:cursor-default" : ""}`}
+                            onClick={() => commitCardPreference(clientID, cardText)}
                             >
                             {cardText}
                         </div>

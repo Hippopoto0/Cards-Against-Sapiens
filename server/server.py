@@ -98,8 +98,12 @@ class Room:
     def __init__(self, id) -> None:
         self.id: str = id
         
+        
         self.black_cards = copy.deepcopy(black_cards)
         self.white_cards = copy.deepcopy(white_cards)
+
+        random.shuffle(self.black_cards)
+        random.shuffle(self.white_cards)
 
         self.players: Dict[str, Player] = {}
         self.commited_cards: Dict[str, str] = {}
@@ -145,7 +149,13 @@ class Room:
 
         return card
 
+    def gotoNextPromptAndReturnPrompt(self):
+        self.black_cards.append(self.black_cards[0])
 
+        self.prompt = self.black_cards.pop(0)
+        self.prompt = self.prompt["text"].replace("_", "_____")
+
+        return self.prompt
 
     def getPlayerCards(self, client_id: str) -> List[any]:
         player = self.players[client_id]
@@ -317,6 +327,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     print(f"id of winner: {id_of_winner}")
 
                     await manager.send_room_message(f"receive_winner||{id_of_winner}", room=client_room)
+                    prompt = client_room.gotoNextPromptAndReturnPrompt()
+
+                    await manager.send_room_message(f"receive_prompt||{prompt}", room=client_room)
 
             if header == "request_extra_card":
                 latestCard = manager.get_room(client_id=client_id).getExtraCard(client_id=client_id)
