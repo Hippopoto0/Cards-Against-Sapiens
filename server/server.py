@@ -246,9 +246,12 @@ class ConnectionManager:
         else:
             return False
 
-    def get_winner_and_reset_round(self, room: Room):
+    def get_winner_data_and_reset_round(self, room: Room):
         # maxClient = max(room.preferenceCount, key=room.preferenceCount.get)
-        maxClient = max(room.preferenceCount, key=room.preferenceCount.get)
+        maxClientID = max(room.preferenceCount, key=room.preferenceCount.get)
+
+        maxClientUsername = ClientToUserName[maxClientID]
+        maxClientCard = room.commited_cards[maxClientID]
 
         # reset stuff
         room.preferenceCount = {}
@@ -257,7 +260,7 @@ class ConnectionManager:
 
         print(room.preferenceCount.keys(), flush=True)
 
-        return maxClient
+        return { "client_id": maxClientID, "client_username": maxClientUsername, "client_card_text": maxClientCard }
 
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
@@ -335,11 +338,11 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
                 if are_all_preferences_done:
                     client_room = manager.get_room(client_id=client_id)
-                    id_of_winner = manager.get_winner_and_reset_round(room=client_room)
+                    winner_data = manager.get_winner_data_and_reset_round(room=client_room)
 
-                    print(f"id of winner: {id_of_winner}")
+                    print(f"winner data: {json.dumps(winner_data)}")
 
-                    await manager.send_room_message(f"receive_winner||{id_of_winner}", room=client_room)
+                    await manager.send_room_message(f"receive_winner||{json.dumps(winner_data)}", room=client_room)
                     prompt = client_room.gotoNextPromptAndReturnPrompt()
 
                     await manager.send_room_message(f"receive_prompt||{prompt}", room=client_room)

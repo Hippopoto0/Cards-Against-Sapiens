@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from "react-router-dom"
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useCards } from '../stores/cards';
 import { userUsernameStore } from '../stores/username';
 import { ws } from '../stores/webSocket';
 
@@ -14,12 +15,15 @@ function EnterRoom() {
 
     const usernameElRef = useRef<HTMLInputElement>(null)
     const { username, setUsername } = userUsernameStore((state) => ({ username: state.username, setUsername: state.setUsername }))
+    const { setPrompt, setAnswers } = useCards((state) => ({ setPrompt: state.setPrompt, setAnswers: state.setAnswers }))
 
     const navigate = useNavigate()
 
     useLayoutEffect(() => {
         codeInputEl.current?.focus()
         setUsername("")
+        setPrompt("")
+        setAnswers([])
     }, [])
 
     function decrementDigitIndex() {
