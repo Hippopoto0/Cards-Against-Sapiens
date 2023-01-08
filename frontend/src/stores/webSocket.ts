@@ -1,7 +1,8 @@
 import create from 'zustand'
 
 export const clientID = Date.now().toString()
-export const ws = new WebSocket(`ws://localhost:8000/ws/${clientID}`)
+// export const ws = new WebSocket(`ws://localhost:8000/ws/${clientID}`)
+export const ws = new WebSocket(`ws://cards-against-sapiens-server.onrender.com/ws/${clientID}`)
 
 // interface WebSocketState {
 //     ws: WebSocket,
