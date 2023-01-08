@@ -10,9 +10,23 @@ from contextlib import suppress
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.logger import logger
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173",
+    "https://cards-against-sapiens.onrender.com"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 html = """
 <!DOCTYPE html>
@@ -54,7 +68,7 @@ html = """
 global white_cards
 global black_cards
 
-with open("server/allCards.json", "r", encoding="utf-8") as f:
+with open("allCards.json", "r", encoding="utf-8") as f:
     data = json.load(f)
     white_cards = []
     black_cards = []
