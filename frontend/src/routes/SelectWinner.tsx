@@ -8,7 +8,7 @@ import { useScoreStore } from '../stores/score'
 import { Dialog, Transition } from '@headlessui/react'
 
 function SelectWinner() {
-    const {prompt, commitedCards, setCommitedCards} = useCards((state) => ({prompt: state.prompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards}))
+    const {prompt, commitedCards, setCommitedCards, pushToAnswers} = useCards((state) => ({prompt: state.prompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards, pushToAnswers: state.pushToAnswers}))
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const roomID = searchParams.get("roomID")
@@ -54,6 +54,12 @@ function SelectWinner() {
                 }, 2000);
 
             }
+        
+            if (header === "receive_extra_card") {
+                let newCardText = JSON.parse(content).text
+                console.log(`Card: ${newCardText}`)
+                pushToAnswers(newCardText)
+            }
         }
     }, [])
 
@@ -76,6 +82,7 @@ function SelectWinner() {
 
     function commitCardPreference(id_of_preference: string, textOfPreference: string) {
         if (preferredCard != "") return
+        if (Object.keys(commitedCards).length > 1 && id_of_preference === clientID) return
         
         setPreferredCard(textOfPreference)
 
@@ -92,16 +99,17 @@ function SelectWinner() {
                 </div>
                 </section>
                 <section className=' my-8 md:my-0 grid gap-y-10 md:gap-y-10 lg:gap-y-20 p-4 place-items-center grid-cols-2 grid-rows-5 md:grid-cols-4 md:grid-rows-3 w-full xs:w-4/5 sm:w-3/5 md:w-full h-auto lg:grid-cols-5 lg:grid-rows-2 flex-1'>
-                    {Object.keys(commitedCards).map((clientID, i) => {
-                        let cardText = commitedCards[clientID]
+                    {Object.keys(commitedCards).map((cardsClientID, i) => {
+                        let cardText = commitedCards[cardsClientID]
 
                         return <div 
                             key={i} 
                             className={`anime-fade-children select-none p-2 text-sm font-semibold 
                             text-zinc-800 w-32 aspect-[3/4] bg-primary rounded-xl shadow-sm border-2 
                             border-zinc-300 hover:cursor-pointer transition-colors duration-500
-                            ${preferredCard != "" && preferredCard != cardText ? "bg-zinc-400/50 text-zinc-800/30 hover:cursor-default" : ""}`}
-                            onClick={() => commitCardPreference(clientID, cardText)}
+                            ${preferredCard != "" && preferredCard != cardText ? "bg-zinc-400/50 text-zinc-800/30 hover:cursor-default" : ""}
+                            ${Object.keys(commitedCards).length > 1 && cardsClientID === clientID ? "bg-zinc-400/50 text-zinc-800/30 hover:cursor-default" : ""}`}
+                            onClick={() => commitCardPreference(cardsClientID, cardText)}
                             >
                             {cardText}
                         </div>
