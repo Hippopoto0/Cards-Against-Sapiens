@@ -71,7 +71,7 @@ function App() {
       }
       if (header === "receive_extra_card") {
         let newCardText = JSON.parse(content).text
-
+        console.log(`Card: ${newCardText}`)
          pushToAnswers(newCardText)
       }
     }
