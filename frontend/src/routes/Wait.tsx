@@ -6,6 +6,7 @@ import { TbClipboard } from "react-icons/tb"
 import { ws, clientID } from '../stores/webSocket'
 import { Dialog, Transition } from '@headlessui/react'
 import { userUsernameStore } from '../stores/username'
+import { toast } from 'react-toastify'
 
 function copyTextToClipboard(text: string) {
   var textArea = document.createElement("textarea");
@@ -215,7 +216,30 @@ function Wait() {
                         onClick={() => {
                           setModalOpen(false)
 
-                          if (username != "") { ws.readyState && ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
+                          if (username != "") { 
+                            console.log(`currently: ${ws.readyState}`)
+                            if (ws.readyState) { ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
+                            else {
+                              let pollAttempts = 0
+
+                              let pollingInterval = setInterval(() => {
+                                pollAttempts += 1
+
+                                if (pollAttempts > 1000) {
+                                  console.log("polling concluded with no response")
+                                  clearInterval(pollingInterval)
+                                }
+
+                                if (ws.readyState) {
+                                  ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`)
+
+                                  clearInterval(pollingInterval)
+                                }
+                              }, 50)
+                            }
+
+                            
+                          }
                         }}
                         className='ml-4 font-bold px-6 py-3 rounded-md bg-zinc-800 text-gray-50 hover:brightness-125'
                     >

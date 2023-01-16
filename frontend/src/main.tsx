@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import {
   createBrowserRouter,
   RouterProvider,
+  createHashRouter
 } from "react-router-dom";
 import './index.css'
 import Base from './routes/Base';
@@ -12,7 +13,7 @@ import SelectWinner from './routes/SelectWinner';
 import Wait from './routes/Wait';
 import Modal from './components/modal';
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <EnterRoom />,
