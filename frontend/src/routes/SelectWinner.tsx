@@ -8,7 +8,7 @@ import { useScoreStore } from '../stores/score'
 import { Dialog, Transition } from '@headlessui/react'
 
 function SelectWinner() {
-    const {prompt, commitedCards, setCommitedCards, pushToAnswers} = useCards((state) => ({prompt: state.prompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards, pushToAnswers: state.pushToAnswers}))
+    const {prompt, setPrompt, commitedCards, setCommitedCards, pushToAnswers} = useCards((state) => ({prompt: state.prompt, setPrompt: state.setPrompt, commitedCards: state.commitedCards, setCommitedCards: state.setCommitedCards, pushToAnswers: state.pushToAnswers}))
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const roomID = searchParams.get("roomID")
@@ -59,6 +59,10 @@ function SelectWinner() {
                 let newCardText = JSON.parse(content).text
                 console.log(`Card: ${newCardText}`)
                 pushToAnswers(newCardText)
+            }
+
+            if (header === "receive_prompt") {
+                setPrompt(content)
             }
         }
     }, [])
