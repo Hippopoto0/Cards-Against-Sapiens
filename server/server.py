@@ -264,8 +264,13 @@ class ConnectionManager:
         # maxClient = max(room.preferenceCount, key=room.preferenceCount.get)
         maxClientID = max(room.preferenceCount, key=room.preferenceCount.get)
 
-        maxClientUsername = ClientToUserName[maxClientID]
-        maxClientCard = room.commited_cards[maxClientID]
+        if maxClientID in ClientToUserName:
+            maxClientUsername = ClientToUserName[maxClientID]
+            maxClientCard = room.commited_cards[maxClientID]
+        else:
+            maxClientUsername = "Winner Left Room"
+            maxClientCard = "Winner Left Room"
+
 
         # reset stuff
         room.preferenceCount = {}
@@ -327,9 +332,13 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 print(f"rooms: {manager.rooms}")
 
                 if roomID in WaitingRooms:
-                    await manager.send_personal_message(f"receive_does_room_exist||true", websocket=websocket)
+                    await manager.send_personal_message(f"receive_does_waiting_room_exist||true", websocket=websocket)
                 else:
-                    await manager.send_personal_message(f"receive_does_room_exist||false", websocket=websocket)
+                    await manager.send_personal_message(f"receive_does_waiting_room_exist||false", websocket=websocket)
+
+                if roomID in manager.rooms:
+
+                    await manager.send_personal_message(f"receive_does_game_room_exist||true", websocket=websocket)
 
             if header == "get_prompt":
                 await manager.send_personal_message(f"receive_prompt||{manager.get_room(client_id).prompt}", websocket)
@@ -365,6 +374,11 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 latestCard = manager.get_room(client_id=client_id).getExtraCard(client_id=client_id)
 
                 await manager.send_personal_message(f"receive_extra_card||{json.dumps(latestCard)}", websocket=websocket)
+
+            if header == "submit_username":
+                username = data.split("||")[1]
+
+                ClientToUserName[client_id] = username
 
             if header == "add_to_waiting_room":
                 id_and_username = data.split("||")[1]
@@ -421,6 +435,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
         manager.disconnect(websocket, client_id)
 
         if client_id in ClientToUserName: del ClientToUserName[client_id]
+        client_room = manager.get_room(client_id=client_id)
+
+        del client_room.players[client_id]
 
         if client_id in ClientToWaitingRoom:
             print("client should be removed from room", flush=True)

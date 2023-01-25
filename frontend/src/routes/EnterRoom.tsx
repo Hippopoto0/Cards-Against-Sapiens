@@ -72,11 +72,20 @@ function EnterRoom() {
         ws.onmessage = (e: MessageEvent<String>) => {
             const [header, content] = e.data.split("||")
 
-            if (header === "receive_does_room_exist") {
+            if (header === "receive_does_waiting_room_exist") {
                 if (content === "true") {
                     navigate(`/wait?roomID=${roomName.toUpperCase()}`)
                 } else {
                     toast.error("That room doesn't exist yet!")
+                }
+            }
+
+            if (header === "receive_does_game_room_exist") {
+                if (content === "true") {
+                    if ( username != "" ) {
+                        ws.send(`submit_username||${username}`)
+                        navigate(`/game?roomID=${roomName.toUpperCase()}`)
+                    }
                 }
             }
         }
