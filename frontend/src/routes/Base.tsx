@@ -3,6 +3,7 @@ import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useCards } from '../stores/cards'
 import { useScoreStore } from '../stores/score'
+import { userUsernameStore } from '../stores/username'
 import { clientID, ws } from '../stores/webSocket'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
   // const [answers, setAnswers] = useState<string[]>([])
 
   const {prompt, answers, setPrompt, setAnswers, pushToAnswers, removeFromAnswers, commitedCard, setCommitedCard, setCommitedCards} = useCards((state) => ({answers: state.answers, prompt: state.prompt, setPrompt: state.setPrompt, setAnswers: state.setAnswers, pushToAnswers: state.pushToAnswers, removeFromAnswers: state.removeFromAnswers, commitedCard: state.commitedCard, setCommitedCard: state.setCommitedCard, setCommitedCards: state.setCommitedCards}))
+  const { username } = userUsernameStore((state) => ({ username: state.username }))
 
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -27,7 +29,9 @@ function App() {
   
 
   useLayoutEffect(() => {
-    // ws.readyState && ws.send(`join_room||${roomID}`)
+    if (username == "") return navigate("/")
+    ws.readyState && answers.length == 0 && ws.send(`join_room||${roomID}`)
+    
     window.addEventListener("popstate", (e) => {
       e.preventDefault()
 
