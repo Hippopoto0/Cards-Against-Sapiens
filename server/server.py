@@ -1,3 +1,4 @@
+import time
 from typing import List, Dict
 from dataclasses import dataclass
 import json
@@ -410,6 +411,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 print(WaitingRooms[roomID])
 
                 for tempClient in WaitingRooms[roomID]:
+                    # time.sleep(2)
                     await manager.send_personal_message(f"receive_waiting_players||{clients_in_room}", websocket=manager.ids_to_sockets[tempClient])
 
             if header == "start_game_from_wait":
