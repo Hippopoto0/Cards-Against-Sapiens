@@ -40,11 +40,16 @@ class ConnectionManager:
         self.join_room(room_id=room_id, client_id=client_id)
 
     async def commit_card_and_return_if_full(self, client_id: str, card_text: str, websocket: WebSocket) -> bool:
-        isFull = self.get_room(client_id=client_id).commitCardAndReturnIfRoundOver(client_id=client_id, card_text=card_text)
+        room = self.get_room(client_id=client_id)
+        isFull = room.commitCardAndReturnIfRoundOver(client_id=client_id, card_text=card_text)
         if isFull:
             return True
         else:
-            return False
+            # Check if the room has only one player.
+            if len(room.players) == 1:
+                return True
+            else:
+                return False
 
     def add_to_card_scores_and_return_if_all_commited(self, client_id: str, id_for_card: str) -> bool:
         client_room = self.get_room(client_id=client_id)

@@ -79,7 +79,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 print(f"Unhandled header: {header}")
     except WebSocketDisconnect:
         manager.disconnect(websocket, client_id)
-        from models import ClientToUserName, WaitingRooms, ClientToWaitingRoom
+        from .models import ClientToUserName, WaitingRooms, ClientToWaitingRoom
         if client_id in ClientToUserName:
             del ClientToUserName[client_id]
         client_room = manager.get_room(client_id=client_id)
