@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD uvicorn server:app --reload --host 0.0.0.0 --port 5000
+CMD uvicorn main:app --reload --host 0.0.0.0 --port 5000
