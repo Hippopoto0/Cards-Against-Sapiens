@@ -1,0 +1,3 @@
+.pytest_cache
+server/__pycache__
+server/.pytest_cache
