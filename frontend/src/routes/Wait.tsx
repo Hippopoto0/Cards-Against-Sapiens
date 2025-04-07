@@ -77,11 +77,7 @@ function Wait() {
     const [clientsInRoom, setClientsInRoom] = useState([])
 
     const { username, setUsername } = userUsernameStore((state) => ({ username: state.username, setUsername: state.setUsername }))
-    
-    // necessary for only adding waiting for server backdrop once username fully typed in
-    const [hasSubmittedUsername, setHasSubmittedUsername] = useState(false)
     // console.log("socket: " + ws.readyState)
-    const [isWaitingListReceived, setIsWaitingListReceived] = useState(false)
 
     useLayoutEffect(() => {
         if (username == "") setModalOpen(true)
@@ -90,10 +86,7 @@ function Wait() {
 
         
         // ws.readyState && ws.send(`add_to_waiting_room||${roomID}`)
-        if (username != "") { 
-          ws.readyState && ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`)
-          setHasSubmittedUsername(true)
-        }
+        if (username != "") { ws.readyState && ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
 
         ws.onmessage = (e: MessageEvent<String>) => {
             const [header, content] = e.data.split("||")
@@ -107,7 +100,6 @@ function Wait() {
             if (header === "receive_waiting_players") {
                 console.log("gotta get rid maybe: " + content)
                 setClientsInRoom(JSON.parse(content))
-                setIsWaitingListReceived(true)
             }
 
             if (header === "receive_goto_game") {
@@ -174,106 +166,92 @@ function Wait() {
                 </button>
             </div>
         </main>
-        <Transition appear show={isModalOpen} as={Fragment}>
-              <Dialog as="div" className="relative z-10" onClose={() => { setModalOpen(false); setTimeout(() => {
-                navigate("/")
-              }, 200);}}>
-                <Transition.Child
-                  as={Fragment}
-                  enter="ease-out duration-300"
-                  enterFrom="opacity-0"
-                  enterTo="opacity-100"
-                  leave="ease-in duration-200"
-                  leaveFrom="opacity-100"
-                  leaveTo="opacity-0"
-                >
-                  <div className="fixed inset-0 bg-black bg-opacity-60" />
-                </Transition.Child>
+   <Transition appear show={isModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => { setModalOpen(false); setTimeout(() => {
+          navigate("/")
+        }, 200);}}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-60" />
+          </Transition.Child>
 
-                <div className="fixed inset-0 overflow-y-auto">
-                  <div className="flex min-h-full items-center justify-center p-4 text-center">
-                    <Transition.Child
-                      as={Fragment}
-                      enter="ease-out duration-300"
-                      enterFrom="opacity-0 scale-95"
-                      enterTo="opacity-100 scale-100"
-                      leave="ease-in duration-200"
-                      leaveFrom="opacity-100 scale-100"
-                      leaveTo="opacity-0 scale-95"
-                    >
-                      <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-secondary p-6 text-left align-middle shadow-xl transition-all flex flex-col items-center justify-center">
-                        <Dialog.Title
-                          as="h3"
-                          className="text-2xl font-bold text-center leading-6 text-zinc-800"
-                        >
-                          Enter a Username
-                        </Dialog.Title>
-                        <input type="text" placeholder='Username' onChange={(e) => setUsername(e.target.value)} className=' rounded-md p-2 font-bold mt-8 outline-none focus:outline-2 focus:outline-zinc-3 00' />
-
-                        <div className="mt-8 w-full flex">
-                          <button 
-                              onClick={() => { setModalOpen(false); setTimeout(() => {
-                navigate("/")
-              }, 200);}}
-                              className='ml-auto font-bold px-6 py-3 rounded-md text-zinc-800 border-2 bg-secondary border-zinc-800 hover:brightness-95'
-                          >
-                              Menu
-                          </button>
-                        
-                          <button 
-                              onClick={() => {
-                                setModalOpen(false)
-                                setHasSubmittedUsername(true)
-
-                                if (username != "") { 
-                                  console.log(`currently: ${ws.readyState}`)
-                                  if (ws.readyState) { ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
-                                  else {
-                                    let pollAttempts = 0
-
-                                    let pollingInterval = setInterval(() => {
-                                      pollAttempts += 1
-
-                                      if (pollAttempts > 1000) {
-                                        console.log("polling concluded with no response")
-                                        clearInterval(pollingInterval)
-                                      }
-
-                                      if (ws.readyState) {
-                                        ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`)
-
-                                        clearInterval(pollingInterval)
-                                      }
-                                    }, 50)
-                                  }
-
-                                  
-                                }
-                              }}
-                              className='ml-4 font-bold px-6 py-3 rounded-md bg-zinc-800 text-gray-50 hover:brightness-125'
-                          >
-                              Join
-                          </button>
-                        </div>
-                      </Dialog.Panel>
-                    </Transition.Child>
-                  </div>
-                </div>
-              </Dialog>
-            </Transition>
-            <Transition show={username != "" && hasSubmittedUsername && !isWaitingListReceived}
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
                 enter="ease-out duration-300"
-                enterFrom="opacity-0"
-                enterTo="opacity-100"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
                 leave="ease-in duration-200"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"         
-            >
-              <div className='transition-opacity absolute top-0 left-0 w-full h-screen z-10 bg-slate-200/70 flex flex-col items-center justify-center backdrop-blur-[2px]'>
-                  <h1 className='text-zinc-600 font-bold'>The server has probably been sleeping, it needs a sec to wake up</h1>
-                  <h1 className='text-zinc-600 mt-2'>It shouldn't take too long!</h1>
-              </div>
-            </Transition>
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-secondary p-6 text-left align-middle shadow-xl transition-all flex flex-col items-center justify-center">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-2xl font-bold text-center leading-6 text-zinc-800"
+                  >
+                    Enter a Username
+                  </Dialog.Title>
+                  <input type="text" placeholder='Username' onChange={(e) => setUsername(e.target.value)} className=' rounded-md p-2 font-bold mt-8 outline-none focus:outline-2 focus:outline-zinc-3 00' />
+
+                  <div className="mt-8 w-full flex">
+                    <button 
+                        onClick={() => { setModalOpen(false); setTimeout(() => {
+          navigate("/")
+        }, 200);}}
+                        className='ml-auto font-bold px-6 py-3 rounded-md text-zinc-800 border-2 bg-secondary border-zinc-800 hover:brightness-95'
+                    >
+                        Menu
+                    </button>
+                   
+                    <button 
+                        onClick={() => {
+                          setModalOpen(false)
+
+                          if (username != "") { 
+                            console.log(`currently: ${ws.readyState}`)
+                            if (ws.readyState) { ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`) }
+                            else {
+                              let pollAttempts = 0
+
+                              let pollingInterval = setInterval(() => {
+                                pollAttempts += 1
+
+                                if (pollAttempts > 1000) {
+                                  console.log("polling concluded with no response")
+                                  clearInterval(pollingInterval)
+                                }
+
+                                if (ws.readyState) {
+                                  ws.send(`add_to_waiting_room||${JSON.stringify({"roomID": roomID, "username": username})}`)
+
+                                  clearInterval(pollingInterval)
+                                }
+                              }, 50)
+                            }
+
+                            
+                          }
+                        }}
+                        className='ml-4 font-bold px-6 py-3 rounded-md bg-zinc-800 text-gray-50 hover:brightness-125'
+                    >
+                        Join
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
         </>
     )
 }
