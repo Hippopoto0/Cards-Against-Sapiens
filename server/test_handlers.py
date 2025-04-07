@@ -1,8 +1,8 @@
 import pytest
 import json
-from .handlers import handlers
-from .connection_manager import manager
-from .models import WaitingRooms, ClientToWaitingRoom, ClientToUserName, Room
+from handlers import handlers
+from connection_manager import manager
+from models import WaitingRooms, ClientToWaitingRoom, ClientToUserName, Room
 
 class DummyWebSocket:
     def __init__(self):

@@ -94,7 +94,3 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 print(f"sending updates waiting to client: {tempClient}")
                 await manager.send_personal_message(f"receive_waiting_players||{clients_in_room}", manager.ids_to_sockets[tempClient])
         await manager.broadcast(f"Client #{client_id} left the chat")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="info")
