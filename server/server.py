@@ -68,7 +68,7 @@ html = """
 global white_cards
 global black_cards
 
-with open("allCards.json", "r", encoding="utf-8") as f:
+with open(os.path.abspath("./") + "/server/" + "allCards.json", "r", encoding="utf-8") as f:
     data = json.load(f)
     white_cards = []
     black_cards = []
